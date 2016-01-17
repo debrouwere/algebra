@@ -1,0 +1,107 @@
+conjure up an expression with at most n terms
+and at most v variables
+
+the most common types of irreducible expressions are
+
+* regular polynomials: ax^n + bx^m + ... + c
+* irreducible polynomials: (a + 1)(a - 1)(...)
+* variants on irreducible polynomials e.g. (a + 1)(a - 1)^-1
+
+On the one hand I'd like a generalized approach, on the other hand
+it seems nice to just have different conjuring algorithms, because
+different kinds of (solutions to) problems come with their own 
+level of difficulty, e.g. (a + 2)(a - 2) type problems are much
+harder than when the solution is just x^2... and in fact, many 
+of the issues that Mel needs to solve aren't even symbolic at all, 
+just "solve this big polynomial while taking into account all
+those pesky little precedence rules"
+
+
+It's annoying that the conjure/confuse mechanism is not up to scratch yet, 
+but it might actually be a good idea to generate a bunch of exercises 
+by hand (question/solution pairs). Ultimately, it's the interactive
+checker that's most important from a learning perspective.
+(Though using the conjuring mechanism would definitely be a good thing, 
+especially if we can ask it "hey, incorporate this strategy at least
+once, but not this other one yet, because we haven't seen it yet".)
+
+So maybe switch to the web part for a bit, and then revisit the
+conjuring and confusor mechanisms.
+
+---
+
+Okay, so I've now taken a fresh look at the kinds of exercises that are commonly given:
+
+1. get to know the operations
+
+* commutative, associative, distributive
+* apply the order of operations on complex expressions
+  e.g. `-(5 + (-x + (-x)^2)^3) * 5` is mathematically trivial, but 
+  arithmetically there's a lot of potential points for small mistakes;
+  in fact most of these exercises don't need unknowns, and the 
+  solution is a number
+  e.g. `c^4 c^2 = c^6`, `-4d - 4 + 4d = -4`
+* negatives
+  * - * + and - * -
+  * `-(a - b) = b - a` and `-(b - a) = a - b`
+* working with powers
+  e.g. `(x^3)^2` vs. `(x^2 * x^3)` vs. `(x^3 + x^2)`
+       (which can be tricky, because intuitively you might
+       want to reduce these different powers to a single factor,
+       so metacognition is important here)
+  e.g. `1/x^-3` = x^3`, `x^(-2/3) = 1/qrt(x^2)`
+  e.g. `x^(1/2) = sqrt(x)`
+  e.g. `a / b^3 = a * b^-3`
+  e.g. what is the solution to x / (x + y^3)^2
+  e.g. how can you simplify `1 / x^(-3/2)` such that it
+  does not have any negative powers or fractional powers, or
+  conversely, how can you write a bunch of powers and roots
+  as a single fractional power
+  * the difference between -x^2 and (-x)^2
+  * remove square roots or negative powers from denominators
+    e.g. from `1/sqrt(2)` to `sqrt(2)/2`
+* extract wholes from square roots and squares
+  e.g. sqrt(40) = 2 sqrt(10)
+  e.g. 4x^2 + 9 = (2x)^2 + 3^2
+  (Note: could do yes/no questions as well: do you think this is the correct solution? Might work well for metacognition.)
+
+2. distributivity and other operations on polynomials
+  e.g. `3(2x + 5)`, `(2x + 5) - 3`, `(2x + 5)/3`
+  e.g. `(2x + 5) / (3x + 7)`
+  * nothing really new, but it gets confusing really fast because you
+    need to keep a lot in working memory (tricks like assigning each
+    factor to a variable and then filling in work well)
+
+3. expanding and factoring
+   * binomial products: (a+b)^2, (a-b)^2, (a+b)(a-b)
+     * e.g. straight-up: just expand everything you can, and simplify while you're at it
+     * e.g. more involved: intelligently expand or factor to get rid of certain terms
+       and simplify the final expression
+
+4. cross-multiplication and addition/subtraction with fractions
+   * a/b + c/d = (ad + bc) / bd
+   * (a + b)(c + d) = ac + ad + bc + bd
+     (a + b)(c - d) = ac - ad + bc - bd
+     (a - b)(c - d) = ac - ad - bc + bd
+   * recognize that these apply to simpler variants too
+     e.g. (a+b)(a+b) = a^2 + ab + ba + b^2 = a^2 + 2ab + b^2
+     e.g. (x+a)(x+b) = x^2 + xa + xb + ab = x^2 + (a + b)x + ab
+   * here too, there's straight-up exercises to see if you can do this, 
+     and more involved exercises where you'll need to cross-multiply or
+     factor to be able to solve the exercise
+
+
+Once we're there, we get to solving first-order and second-order equations, but at that point we're beyond computational skills. Really what we're interested in here is algebra as fancy arithmetic.
+
+In that sense, a more natural extension to the curriculum above would be
+
+* logarithms and exponentials
+* simplify expressions with sin, cos and tan
+  (using sin^2 + cos^2 = 1)
+* summation and product notation
+
+But from there, it wouldn't be that much of a stretch to add differentiation and integration (it's just rules for two more operators) and equations (algebra on two linked expressions, not just one).
+
+---
+
+So really, the problem is not with the conjuring mechanism at all, those can just be very simple one-term or two-term polynomials for most exercises, the crux is with the confusor mechanism, which we have to be able to control quite closely, so it only works with those precise rules that we feed it, and predictably combines a fixed number of "difficult steps" with a fixed number of "easier steps" -- perhaps even indicating the amount of confusion iterations *per rule*, such that e.g. even if the exercise is about expanding a binomial expression, you might also have to flip some signs etc.
