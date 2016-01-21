@@ -241,7 +241,7 @@ tokenize = (s) ->
 
 parse = (s) ->
     tokens = tokenize s
-    return nest shunt tokens
+    nest shunt tokens
 
 
 strategies = 
