@@ -127,9 +127,10 @@ apply = (f) ->
         f.apply this, args
 
 
-concrete = modifies isExpression, (expr, state, recursive=yes) ->
+substitute = modifies isExpression, (expr, state, recursive=yes) ->
     if recursive
-        expr = _.map expr, (_.partial concrete, _, state)
+        expr = _.map expr, (_.partial substitute, _, state)
+    
     state[el] or el for el in expr
 
 
@@ -137,8 +138,8 @@ match = (expr, pattern, state={}) ->
     # we recurse through expressions in our if/else loop, 
     # so no need to recursively make things concrete
     # at this point (saves some cycles)
-    expr = canonical concrete expr, state, no
-    pattern = canonical concrete pattern, state, no
+    expr = canonical substitute expr, state, no
+    pattern = canonical substitute pattern, state, no
 
     isComparable = expr and expr.constructor is pattern.constructor
     isAbstract = (isString expr) or (isString pattern)
@@ -265,7 +266,7 @@ simplify = modifies isExpression, (expr) ->
     for [replacement, pattern] in strategies
         state = {}
         if match expr, pattern, state
-            expr = concrete replacement, state
+            expr = substitute replacement, state
 
     expr
 
@@ -325,12 +326,6 @@ variables = (expr) ->
         _.uniq _.flatten _.map expr[1..], variables
     else
         []
-
-substitute = (expr, map) ->
-    if isExpression expr
-        _.map expr, (_.partial substitute, _, map)
-    else
-        map[expr] or expr
 
 
 # testing is brute-force equality matching:
@@ -463,7 +458,7 @@ factor = (expr) ->
         #console.log expr, pattern
         state = {}
         if match expr, pattern, state
-            expr = concrete replacement, state
+            expr = substitute replacement, state
 
     expr
 
@@ -618,3 +613,22 @@ writeLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes)
 
 show = (o) ->
     console.log (JSON.stringify o).replace /"/g, ''
+
+
+
+module.exports = {
+    tokenize,
+    hasPrecedence,
+    shunt,
+    parse,
+    nest,
+    canonical,
+    complexity,
+    writeLaTeX,
+    match,
+    test,
+    simplify,
+    diff,
+    calculate,
+    substitute,
+}

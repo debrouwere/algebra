@@ -1,3 +1,5 @@
+.PHONY: test
+
 all:
 	coffee --output build --bare --compile src
 	jade --out build src
