@@ -496,39 +496,42 @@ confuse = (expr, iterations=1) ->
     expr
 
 
-# conjure up an expression with at most n terms
-# and at most v variables
-conjureOld = (n, v) ->
-    if n < 1
-        integer = _.random -10, 10
-        variable = choose VARIABLES.slice 0, v
-        choose [integer, variable]
-    else
-        symbol = choose SYMBOLS
-        l = conjure n - 1, v
-        r = conjure n - 2, v
-        [symbol, l, r]
+conjure = (options={}) ->
+    options = _.defaults options, 
+        unknowns: 1
+        order: [0, 2]
+        terms: 3
+        magnitude: 1
 
+    C = 10 ** options.magnitude
+    unknowns = _.shuffle VARIABLES
 
-# let's start simple
-conjurePower = ->
-    a = _.random -10, 10
-    n = _.random -10, 10
-    ['^', a, n]
-
-conjurePolynomial = (order) ->
+    # TODO: different ways to concatenate multiple unknowns
+    # TODO: term skipping
     terms = []
 
-    for n in _.range order + 1
-        a = _.random -10, 10
-        term = ['*', a, ['^', 'x', n]]
-        if terms.length
-            terms = ['+', terms, term]
-        else
-            terms = term
+    [lo, hi] = options.order
+    for u in _.range options.unknowns
+        x = unknowns.pop()
+        for n in _.range lo, hi + 1
+            c = _.random -C, C
+            
+            # simplify the expression where possible
+            # (might also be able to do this by passing
+            # the expression to `simplify` afterwards)
+            if n is 0
+                term = c
+            else if n is 1
+                term = ['*', c, x]
+            else
+                term = ['*', c, ['^', x, n]]
 
+            if terms.length
+                terms = [['+', term, terms[0]]]
+            else
+                terms.push term
 
-conjure = conjurePolynomial
+    terms[0]
 
 
 parens = (s) ->
@@ -538,8 +541,8 @@ braces = (s) ->
     "{#{s}}"
 
 
-write = modifies isExpression, destructured (expr, op, l, r) ->
-    [ops, ls, rs] = _.map expr, write
+toString = modifies isExpression, destructured (expr, op, l, r) ->
+    [ops, ls, rs] = _.map expr, toString
 
     if op not in '^'
         ops = " #{ops} "
@@ -569,9 +572,9 @@ text = (s) ->
     "\\text{#{s}}"
 
 
-writeLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes) ->
+toLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes) ->
     isFraction = fractions and op is '/'
-    writer = _.partial writeLaTeX, _, not isFraction
+    writer = _.partial toLaTeX, _, not isFraction
 
     [ops, ls, rs] = _.map expr, writer
 
@@ -624,11 +627,14 @@ module.exports = {
     nest,
     canonical,
     complexity,
-    writeLaTeX,
+    toString,
+    toLaTeX,
     match,
     test,
     simplify,
     diff,
     calculate,
     substitute,
+    conjure,
+    confuse,
 }

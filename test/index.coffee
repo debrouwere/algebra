@@ -70,7 +70,7 @@ it 'can convert an expression tree into LaTeX', ->
             'b'
         ]
 
-    (algebra.writeLaTeX expr).should.eql \
+    (algebra.toLaTeX expr).should.eql \
         """
         \\frac{
           a + 1
