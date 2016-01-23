@@ -16,8 +16,7 @@ PRECEDENCE =
     '+': 2
     '-': 2
 
-# TODO: I dislike this name
-SYMBOLS = _.keys OPERATORS
+SIGILS = _.keys OPERATORS
 
 VARIABLES = (String.fromCharCode(i) for i in _.range 97, 123)
 
@@ -46,7 +45,7 @@ destructured = (fn) ->
         fn expr, op, l, r, options...
 
 isOperator = (expr) ->
-    expr in SYMBOLS
+    expr in SIGILS
 
 isString = (expr) ->
     isOp = isOperator expr
@@ -87,6 +86,11 @@ flip = (l, i, j) ->
     [l[i], l[j]] = [l[j], l[i]]
     l
 
+unwrap = (obj) ->
+    if obj.length?
+        obj[0]
+    else
+        obj
 
 rank = (expr) ->
     [Function, Array, String, Number].indexOf expr.constructor
@@ -94,22 +98,15 @@ rank = (expr) ->
 compare = (a, b) ->
     (a > b) - (b - a)
 
-hasPrecedence = (a, b) ->
-    comparison = compare (rank a), (rank b)
-    return comparison unless comparison is 0
 
-    if a in SYMBOLS
-        if b in SYMBOLS
-            return PRECEDENCE[a] - PRECEDENCE[b]
-        else
-            return 1
-    else if isExpression a
-        for [l, r] in _.zip a, b
-            comparison = hasPrecedence l, r
-            return comparison if comparison isnt 0
-        return 0
+hasPrecedence = (a, b) ->
+    if ranking = compare (rank a), (rank b)
+        return ranking
+    else if a in SIGILS and b in SIGILS
+        return PRECEDENCE[a] - PRECEDENCE[b]
     else
-        return compare a, b
+        throw new Error "Cannot determine precedence of #{a.constructor.name} and #{b.constructor.name}: #{a}, #{b}"
+
 
 canonical = modifies isExpression, destructured (expr, op, l, r) ->
     if (isCommutative expr) and (compare l, r) < 0
@@ -169,8 +166,8 @@ shunt = (tokens) ->
                 while (_.last ops) isnt '('
                     output.push ops.pop()
                 ops.pop()
-            when token in SYMBOLS
-                while ops.length and (_.last ops) in SYMBOLS and (hasPrecedence (_.last ops), token) > -1
+            when token in SIGILS
+                while ops.length and (_.last ops) in SIGILS and (hasPrecedence (_.last ops), token) > -1
                     output.push ops.pop()
                 ops.push token
             else
@@ -195,7 +192,7 @@ nest = (tokens) ->
     stack = []
 
     for token in tokens
-        if token in SYMBOLS
+        if token in SIGILS
             stack.push [stack.pop(), stack.pop(), token].reverse()
         else
             stack.push token
@@ -233,7 +230,7 @@ tokenize = (s) ->
         prev = tokens[i-1]
         curr = tokens[i]
 
-        if (not prev or prev in SYMBOLS or prev is '(') and curr in '+-'
+        if (not prev or prev in SIGILS or prev is '(') and curr in '+-'
             cleaned.push (parseFloat "#{curr}1"), '*'
         else
             cleaned.push curr
@@ -514,7 +511,8 @@ conjure = (options={}) ->
     for u in _.range options.unknowns
         x = unknowns.pop()
         for n in _.range lo, hi + 1
-            c = _.random -C, C
+            op = _.sample ['+', '-']
+            c = _.random 1, C
             
             # simplify the expression where possible
             # (might also be able to do this by passing
@@ -527,7 +525,7 @@ conjure = (options={}) ->
                 term = ['*', c, ['^', x, n]]
 
             if terms.length
-                terms = [['+', term, terms[0]]]
+                terms = [[op, term, terms[0]]]
             else
                 terms.push term
 
@@ -540,6 +538,11 @@ parens = (s) ->
 braces = (s) ->
     "{#{s}}"
 
+needsParens = (a, b) ->
+    if (isExpression a) and (isExpression b)
+        (hasPrecedence a[0], b[0]) > 0
+    else
+        no
 
 toString = modifies isExpression, destructured (expr, op, l, r) ->
     [ops, ls, rs] = _.map expr, toString
@@ -547,10 +550,10 @@ toString = modifies isExpression, destructured (expr, op, l, r) ->
     if op not in '^'
         ops = " #{ops} "
 
-    if (hasPrecedence expr, l) > 0
+    if needsParens expr, l
         ls = parens ls
 
-    if (hasPrecedence expr, r) > 0
+    if needsParens expr, r
         rs = parens rs
 
     "#{ls}#{ops}#{rs}"
@@ -570,7 +573,6 @@ rightmost = modifies isExpression, destructured (expr, op, l, r) ->
 
 text = (s) ->
     "\\text{#{s}}"
-
 
 toLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes) ->
     isFraction = fractions and op is '/'
@@ -600,12 +602,12 @@ toLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes) ->
         else
             ops = ' '
 
-    if not isFraction and (hasPrecedence expr, l) > 0
+    if not isFraction and needsParens expr, l
         ls = parens ls
 
     if op is '^'
         rs = braces rs
-    else if not isFraction and (hasPrecedence expr, r) > 0
+    else if not isFraction and needsParens expr, r
         rs = parens rs
 
     if fractions and op is '/'
