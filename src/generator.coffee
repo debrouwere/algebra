@@ -1,157 +1,29 @@
 _ = require 'underscore'
-{isCommutative, isNumber, isScalar} = require './parser'
+{isCommutative, isExpression, isNumber, isScalar} = require './parser'
 {parse, match, commute} = require './parser'
 {VARIABLES, SIGILS} = require './parser'
 
 
-strategies = 
-    '0': '0 * v'
-    '(a+b)^2': 'a^2 + 2*a*b + b^2'
+CONSTANT =
+    unknowns: 1
+    order: [0, 0]
+    terms: 1
+    magnitude: 3
 
-strategies = 
-    ([(parse pattern), (parse expansion)] for pattern, expansion of strategies)
+FIRST_ORDER =
+    unknowns: 1
+    order: [0, 1]
+    terms: 3
+    magnitude: 1
 
+SECOND_ORDER =
+    unknowns: 1
+    order: [0, 2]
+    terms: 3
+    magnitude: 1
 
-mistakes =
-    'misapplication of distributivity':
-        '(a + b)^c': 'a^c + b^c'
-    'misapplication of power to a power':
-        'a^b^c': 'a^(b^c)'
-        'a^b^c': 'a^(b+c)'
-    'misapplication of multiplying different powers of the same base':
-        'a^b * a^c': 'a^(b*c)'
-    # and so on...
-
-# console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
-
-
-# TODO: randomize, add opportunities
-# NOTE: this is the opposite of solving, though for solving
-# we can probably just use the `executable` function and 
-# then fold everything up, so solving and confusing are
-# not necessarily similar code paths
-# NOTE: by using `this` for random number generation, 
-# we can further control the difficulty (e.g. 
-# only generate small numbers)
-# NOTE: these opportunities rely on the fact that confusion
-# happens recursively, so that while e.g. expr + 1700 * 0
-# is a no-brainer, expr + 1700 * 9^2 * (8 - 2^3) does
-# take a couple of steps to properly simplify
-# (but again, the really interesting stuff will happen when
-# we have a good swapping mechanism so not everything is 
-# adjacent until the student makes it so)
-confusors =
-    'swap':
-        condition: isCommutative
-        weight: 1
-        op: commute
-    'sum':
-        condition: isNumber
-        weight: 1
-        op: (a) ->
-            b = this.integer()
-            ['+', b, a - b]
-    'cancel':
-        condition: no
-        weight: 1
-        op: (expr) ->
-            a = this.scalar()
-            ['-', ['+', expr, a], a]
-    'null':
-        condition: isScalar
-        weight: 1
-        op: (expr) ->
-            a = this.scalar()
-            ['+', expr, ['*', a, 0]]
-    'power':
-        condition: no
-        weight: 1
-        op: (expr) ->
-            ['^', expr, 1]
-
-
-choose = (l) ->
-    ix = _.random 0, l.length - 1
-    l[ix]
-
-
-# TODO: make this probabilistic, but with a fixed 
-# amount of confusions (only *where* the confusions
-# happen should be probabilistic)
-# TODO: also swap stuff (similar to the permutations
-# we'll need for more powerful solving)
-# TODO: a mix of concrete (numbers) and abstract (variables)
-class Context
-    # TODO: figure out symbols that are actually still available
-    constructor: ->
-        @freeSymbols = ['x', 'y', 'z']
-
-    # TODO
-    symbol: ->
-        choose ['x', 'y', 'z']
-    
-    scalar: ->
-        (choose [@symbol, @integer])()
-    
-    integer: ->
-        _.random -10, 10
-
-
-# TODO: hmm, I think this has all the right elements --
-# it has the recursion, it has the "make stuff more difficult"
-# strategies as well as the "split into factors" strategies, 
-# but I need to figure out how to make all of this work together
-# nicely
-factor = (expr) ->
-    for [pattern, replacement] in strategies
-        #console.log expr, pattern
-        state = {}
-        if match expr, pattern, state
-            expr = substitute replacement, state
-
-    expr
-
-
-exports.confuse = (expr, iterations=1) ->
-    return expr unless iterations
-
-    # TODO: in addition to using more strategies, 
-    # also use equivalencies (e.g. replace a number
-    # with a sum of two other numbers, then
-    # maybe confuse those further)
-    expr = factor expr
-
-    # confuse
-    opportunities = []
-    for name, confusor of confusors
-        isApplicable = confusor.condition or (-> yes)
-        continue unless isApplicable expr
-        for i in _.range confusor.weight
-            opportunities.push confusor.op
-
-    # TODO: maintain and customize context
-    context = new Context()
-    confusor = choose opportunities
-    expr = confusor.call context, expr
-
-    # recurse
-    if isExpression expr
-        for el, i in expr
-            break unless i and iterations
-            replacement = confuse el, iterations
-            if el isnt replacement
-                expr[i] = replacement
-                iterations -= 1
-
-    expr
-
-
-exports.conjure = (options={}) ->
-    options = _.defaults options, 
-        unknowns: 1
-        order: [0, 2]
-        terms: 3
-        magnitude: 1
+conjure = (options={}) ->
+    options = _.defaults options, SECOND_ORDER
 
     C = 10 ** options.magnitude
     unknowns = _.shuffle VARIABLES
@@ -183,3 +55,149 @@ exports.conjure = (options={}) ->
                 terms.push term
 
     terms[0]
+
+
+# TODO: reorder an expression tree into something equivalent
+# using commutativity across different depths of the tree
+# (e.g. a + b + c => c + b + a)
+# -- perhaps this can be accomplished by randomly swapping
+# or not swapping at various depths, maybe true "in-depth"
+# swapping is not necessary
+# -- in fact perhaps if the confusion mechanism is good 
+# enough shuffling is not even necessary
+shuffle = (expr) ->
+
+
+strategies = 
+    '0': '0 * v'
+    '(a+b)^2': 'a^2 + 2*a*b + b^2'
+
+strategies = 
+    ([(parse pattern), (parse expansion)] for pattern, expansion of strategies)
+
+
+# NOTE: one could even imagine using the confusion mechanism with 
+# these mistakes instead of valid confusors/strategies, and then 
+# asking the student whether A is or is not equal to B
+mistakes =
+    'misapplication of distributivity':
+        '(a + b)^c': 'a^c + b^c'
+    'misapplication of power to a power':
+        'a^b^c': 'a^(b^c)'
+        'a^b^c': 'a^(b+c)'
+    'misapplication of multiplying different powers of the same base':
+        'a^b * a^c': 'a^(b*c)'
+    # and so on...
+
+
+# note: the problem with using scalars rather than numbers
+# is that the number of unknowns could get unwieldy; while
+# the actual complexity of the exercise wouldn't be much higher, 
+# not having the ability to just calculate part of it to simplify
+# it could be hard on students
+confusors =
+    'square': (expr) ->
+        ['^', ['^', expr, 2], 0.5]
+    'cancel': (expr) ->
+        a = _.random 100
+        ['-', ['+', expr, a], a]
+    'null': (expr) ->
+        a = _.random 100
+        ['+', expr, ['*', a, 0]]
+    'multiply': (expr) ->
+        a = _.random 100
+        ['/', ['*', expr, a], a]
+    'power': (expr) ->
+        ['^', expr, 1]
+
+
+choose = (l) ->
+    ix = _.random 0, l.length - 1
+    l[ix]
+
+
+# NOTE: might get rid of this, but leaving it in while I decide on how
+# the confusor should really work going forward
+class Context
+    # TODO: figure out symbols that are actually still available
+    constructor: ->
+        @freeSymbols = ['x', 'y', 'z']
+
+    # TODO
+    symbol: ->
+        choose ['x', 'y', 'z']
+    
+    scalar: (max=10) ->
+        (choose [@symbol, @integer])()
+    
+    integer: (max=10) ->
+        _.random -max, max
+
+
+# TODO: hmm, I think this has all the right elements --
+# it has the recursion, it has the "make stuff more difficult"
+# strategies as well as the "split into factors" strategies, 
+# but I need to figure out how to make all of this work together
+# nicely
+factor = (expr) ->
+    for [pattern, replacement] in strategies
+        state = {}
+        if match expr, pattern, state
+            expr = substitute replacement, state
+
+    expr
+
+
+###
+
+The confusor mechanism is getting better, but there is still much work to do
+
+- prefer depth, in particular the confusor sometimes retains (expr + a - a) as is, 
+  which is what you'd expect when you randomize everything and have a fixed amount
+  of iterations, but really, it leads to exercises that don't alwayslook great
+- alternatively or additionally, partially solve some of the sums to hide the 
+  symmetry that's at the root of every confusor
+- figure out how to add in expansions (2 variable polynomials), perhaps by
+  updating the conjuring mechanism, or perhaps by allowing c=a+b type replacements
+- incorporate negative numbers (which is where it usually gets hairy for students,
+  who must keep track of the order of operations)
+- it has to be possible to really craft a particular kind of exercises that trains
+  one particular rule -- this will be a combination of specifying a subset of 
+  confusors, a subset of strategies, and then most importantly making sure
+  the conjuring and confusion mechanisms work together so that these strategies
+  (e.g. factorization) can actually be employed -- as well as a more advanced
+  pattern matcher, which reorders patterns into every possible permutation or 
+  into a canonical form, so it can detect e.g. the binomial pattern in
+  `a^2 + b^2 + c + d + 2ab`
+
+Also see the notes about conjuring in the design directory. As mentioned there, there's
+no harm in manually creating exercises for now and give the other parts of the 
+application some love, like the mistake differ/detector/explainer part.
+
+###
+
+confuse = (expr, n) ->
+    if n is 0
+        expr
+    else if n is 1
+        confusor = _.sample (_.values confusors)
+        confusor expr
+    else if isScalar expr
+        confusor = _.sample (_.values confusors)
+        confuse (confusor expr), n - 1
+    else
+        # confusors can work on the expression as a whole, or on a part of it, 
+        # and we want to split this evenly
+        [op, l, r] = expr
+        nx = _.random n
+        nl = _.random n - nx
+        nr = n - nx - nl
+        (confuse [op, (confuse l, nl), (confuse r, nr)], nx)
+
+module.exports = {
+    CONSTANT,
+    FIRST_ORDER,
+    SECOND_ORDER,
+    conjure,
+    confuse,
+}
