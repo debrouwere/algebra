@@ -23,6 +23,23 @@ it 'can detect an incomplete expression'
 it 'can determine precedence'
     # hasPrecedence
 
+    ###
+    # proper precedence parsing for equal precedence operators
+    # (first divide, then multiply)
+
+    console.log parse '(a + 22 + b + c) / 22 * b'
+    console.log parse 'a^2 + 2 * a * b + b^2'
+    console.log complexity parse 'a^2 + 2 * a * b + b^2'
+    ###
+
+    ###
+    # parse negative numbers
+    console.log tokenize '-b - -7'
+    console.log tokenize '(-x)^2'
+    show parse '-b^2 + (-x)^2'
+    console.log writeLaTeX parse '-1 * b'
+    ###
+
 it 'can reorder tokens to RPN notation'
     # shunt
     # (test for correct precedence)
@@ -97,6 +114,7 @@ it 'can simplify expressions'
 
 it 'can diff expressions'
     # diff
+    # console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
 
 it 'can calculate the result of a concrete expression', ->
     (parser.calculate ['*', ['+', 4, 5], 9]).should.eql 81
