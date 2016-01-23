@@ -1,5 +1,5 @@
-if require?
-    _ = require 'underscore'
+_ = require 'underscore'
+{modifies, needs} = require './utils'
 
 
 OPERATORS =
@@ -23,21 +23,6 @@ VARIABLES = (String.fromCharCode(i) for i in _.range 97, 123)
 
 sum = (l) ->
     _.reduce l, OPERATORS['+']
-
-
-needs = (condition, f) ->
-    (expr) ->
-        if condition expr
-            f expr
-        else
-            throw Error()
-
-modifies = (condition, f) ->
-    (expr, options...) ->
-        if condition expr
-            f expr, options...
-        else
-            expr
 
 destructured = (fn) ->
     (expr, options...) ->
@@ -74,6 +59,7 @@ isCommutative = destructured (expr, op, l, r) ->
         op in '*+'
     else
         no
+
 
 commute = modifies isExpression, (expr) ->
     if isCommutative expr
@@ -242,14 +228,6 @@ parse = (s) ->
     nest shunt tokens
 
 
-strategies = 
-    '0': '0 * v'
-    '(a+b)^2': 'a^2 + 2*a*b + b^2'
-
-strategies = 
-    ([(parse pattern), (parse expansion)] for pattern, expansion of strategies)
-
-
 # TODO: we can already simplify expressions that match a pattern
 # but also include some cruft at either end, but we can't yet convert
 # a^2 + 2*a*b + c + b^2 to (a+b)^2 + c -- unfortunately canonicalization
@@ -360,205 +338,6 @@ diff = (left, right, context) ->
         _.flatten (diff l, r, left for [l, r] in _.zip left, right), yes
 
 
-mistakes =
-    'misapplication of distributivity':
-        '(a + b)^c': 'a^c + b^c'
-    'misapplication of power to a power':
-        'a^b^c': 'a^(b^c)'
-        'a^b^c': 'a^(b+c)'
-    'misapplication of multiplying different powers of the same base':
-        'a^b * a^c': 'a^(b*c)'
-    # and so on...
-
-# console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
-
-
-# TODO: randomize, add opportunities
-# NOTE: this is the opposite of solving, though for solving
-# we can probably just use the `executable` function and 
-# then fold everything up, so solving and confusing are
-# not necessarily similar code paths
-# NOTE: by using `this` for random number generation, 
-# we can further control the difficulty (e.g. 
-# only generate small numbers)
-# NOTE: these opportunities rely on the fact that confusion
-# happens recursively, so that while e.g. expr + 1700 * 0
-# is a no-brainer, expr + 1700 * 9^2 * (8 - 2^3) does
-# take a couple of steps to properly simplify
-# (but again, the really interesting stuff will happen when
-# we have a good swapping mechanism so not everything is 
-# adjacent until the student makes it so)
-confusors =
-    'swap':
-        condition: isCommutative
-        weight: 1
-        op: commute
-    'sum':
-        condition: isNumber
-        weight: 1
-        op: (a) ->
-            b = this.integer()
-            ['+', b, a - b]
-    'cancel':
-        condition: no
-        weight: 1
-        op: (expr) ->
-            a = this.scalar()
-            ['-', ['+', expr, a], a]
-    'null':
-        condition: isScalar
-        weight: 1
-        op: (expr) ->
-            a = this.scalar()
-            ['+', expr, ['*', a, 0]]
-    'power':
-        condition: no
-        weight: 1
-        op: (expr) ->
-            ['^', expr, 1]
-
-
-choose = (l) ->
-    ix = _.random 0, l.length - 1
-    l[ix]
-
-
-# TODO: make this probabilistic, but with a fixed 
-# amount of confusions (only *where* the confusions
-# happen should be probabilistic)
-# TODO: also swap stuff (similar to the permutations
-# we'll need for more powerful solving)
-# TODO: a mix of concrete (numbers) and abstract (variables)
-class Context
-    # TODO: figure out symbols that are actually still available
-    constructor: ->
-        @freeSymbols = ['x', 'y', 'z']
-
-    # TODO
-    symbol: ->
-        choose ['x', 'y', 'z']
-    
-    scalar: ->
-        (choose [@symbol, @integer])()
-    
-    integer: ->
-        _.random -10, 10
-
-
-# TODO: hmm, I think this has all the right elements --
-# it has the recursion, it has the "make stuff more difficult"
-# strategies as well as the "split into factors" strategies, 
-# but I need to figure out how to make all of this work together
-# nicely
-factor = (expr) ->
-    for [pattern, replacement] in strategies
-        #console.log expr, pattern
-        state = {}
-        if match expr, pattern, state
-            expr = substitute replacement, state
-
-    expr
-
-confuse = (expr, iterations=1) ->
-    return expr unless iterations
-
-    # TODO: in addition to using more strategies, 
-    # also use equivalencies (e.g. replace a number
-    # with a sum of two other numbers, then
-    # maybe confuse those further)
-    expr = factor expr
-
-    # confuse
-    opportunities = []
-    for name, confusor of confusors
-        isApplicable = confusor.condition or (-> yes)
-        continue unless isApplicable expr
-        for i in _.range confusor.weight
-            opportunities.push confusor.op
-
-    # TODO: maintain and customize context
-    context = new Context()
-    confusor = choose opportunities
-    expr = confusor.call context, expr
-
-    # recurse
-    if isExpression expr
-        for el, i in expr
-            break unless i and iterations
-            replacement = confuse el, iterations
-            if el isnt replacement
-                expr[i] = replacement
-                iterations -= 1
-
-    expr
-
-
-conjure = (options={}) ->
-    options = _.defaults options, 
-        unknowns: 1
-        order: [0, 2]
-        terms: 3
-        magnitude: 1
-
-    C = 10 ** options.magnitude
-    unknowns = _.shuffle VARIABLES
-
-    # TODO: different ways to concatenate multiple unknowns
-    # TODO: term skipping
-    terms = []
-
-    [lo, hi] = options.order
-    for u in _.range options.unknowns
-        x = unknowns.pop()
-        for n in _.range lo, hi + 1
-            op = _.sample ['+', '-']
-            c = _.random 1, C
-            
-            # simplify the expression where possible
-            # (might also be able to do this by passing
-            # the expression to `simplify` afterwards)
-            if n is 0
-                term = c
-            else if n is 1
-                term = ['*', c, x]
-            else
-                term = ['*', c, ['^', x, n]]
-
-            if terms.length
-                terms = [[op, term, terms[0]]]
-            else
-                terms.push term
-
-    terms[0]
-
-
-parens = (s) ->
-    "(#{s})"
-
-braces = (s) ->
-    "{#{s}}"
-
-needsParens = (a, b) ->
-    if (isExpression a) and (isExpression b)
-        (hasPrecedence a[0], b[0]) > 0
-    else
-        no
-
-toString = modifies isExpression, destructured (expr, op, l, r) ->
-    [ops, ls, rs] = _.map expr, toString
-
-    if op not in '^'
-        ops = " #{ops} "
-
-    if needsParens expr, l
-        ls = parens ls
-
-    if needsParens expr, r
-        rs = parens rs
-
-    "#{ls}#{ops}#{rs}"
-
-
 leftmost = modifies isExpression, destructured (expr, op, l, r) ->
     if isSimpleExpression expr
         l
@@ -571,72 +350,36 @@ rightmost = modifies isExpression, destructured (expr, op, l, r) ->
     else
         rightmost r
 
-text = (s) ->
-    "\\text{#{s}}"
-
-toLaTeX = modifies isExpression, destructured (expr, op, l, r, fractions=yes) ->
-    isFraction = fractions and op is '/'
-    writer = _.partial toLaTeX, _, not isFraction
-
-    [ops, ls, rs] = _.map expr, writer
-
-    if (isString l) and l.length > 1
-        ls = text ls
-
-    if (isString r) and r.length > 1
-        rs = text rs
-
-    if op not in '^'
-        ops = " #{ops} "
-
-    if op is '*'
-        if (isNumber rightmost l) and (isNumber leftmost r)
-            # use a dot between a multiplication of two constants, 
-            # for clarity
-            ops = " \\cdot "
-        else if l is -1 and (isString leftmost r)
-            # negative numbers are a single token, but negative 
-            # variables are (or will be) encoded as -1 * v
-            ls = '-'
-            ops = ''
-        else
-            ops = ' '
-
-    if not isFraction and needsParens expr, l
-        ls = parens ls
-
-    if op is '^'
-        rs = braces rs
-    else if not isFraction and needsParens expr, r
-        rs = parens rs
-
-    if fractions and op is '/'
-        "\\frac{\n  #{ls}\n}{\n  #{rs}\n}"
-    else
-        "#{ls}#{ops}#{rs}"
-
-
-show = (o) ->
-    console.log (JSON.stringify o).replace /"/g, ''
-
-
 
 module.exports = {
-    tokenize,
+    OPERATORS,
+    PRECEDENCE,
+    SIGILS,
+    VARIABLES,
+    isOperator,
+    isString,
+    isVariable,
+    isScalar,
+    isNumber,
+    isExpression,
+    isSimpleExpression,
+    isSimple,
+    isCommutative,
     hasPrecedence,
+    tokenize,
     shunt,
     parse,
     nest,
+    commute,
+    leftmost,
+    rightmost,
+    destructured,
     canonical,
     complexity,
-    toString,
-    toLaTeX,
     match,
     test,
     simplify,
     diff,
     calculate,
     substitute,
-    conjure,
-    confuse,
 }
