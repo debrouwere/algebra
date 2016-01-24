@@ -76,20 +76,6 @@ strategies =
     ([(parse pattern), (parse expansion)] for pattern, expansion of strategies)
 
 
-# NOTE: one could even imagine using the confusion mechanism with 
-# these mistakes instead of valid confusors/strategies, and then 
-# asking the student whether A is or is not equal to B
-mistakes =
-    'misapplication of distributivity':
-        '(a + b)^c': 'a^c + b^c'
-    'misapplication of power to a power':
-        'a^b^c': 'a^(b^c)'
-        'a^b^c': 'a^(b+c)'
-    'misapplication of multiplying different powers of the same base':
-        'a^b * a^c': 'a^(b*c)'
-    # and so on...
-
-
 # note: the problem with using scalars rather than numbers
 # is that the number of unknowns could get unwieldy; while
 # the actual complexity of the exercise wouldn't be much higher, 

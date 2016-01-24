@@ -140,6 +140,12 @@ parse = (s) ->
     nest shunt tokens
 
 
+patterns = (mapping) ->
+    keys = _.map (_.keys mapping), parse
+    values = _.map (_.values mapping), parse
+    _.zip keys, values
+
+
 #
 # destructuring expressions
 #
@@ -394,8 +400,9 @@ module.exports = {
     # parsing
     tokenize,
     shunt,
+    nest,    
     parse,
-    nest,
+    patterns,
     # destructuring and extraction
     leftmost,
     rightmost,

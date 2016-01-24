@@ -1,7 +1,11 @@
+_ = require 'underscore'
 should = require 'should'
+
 parser = require '../src/parser'
 writer = require '../src/writer'
 generator = require '../src/generator'
+helper = require '../src/helper'
+
 
 it 'can tokenize a mathematical expression', ->
     expressions = 
@@ -113,6 +117,14 @@ it 'can simplify expressions'
 it 'can diff expressions'
 # diff
 # console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
+
+it 'can point out mistakes in intermediate solutions', ->
+    issues = helper.misconceptions \
+        (parser.parse '(x+y)^3'),
+        (parser.parse 'y^3 + x^3')
+    issueNames = _.pluck issues, 'name'
+    issueNames.should.containEql 'misapplication of distributivity'
+
 
 it 'can calculate the result of a concrete expression', ->
     (parser.calculate ['*', ['+', 4, 5], 9]).should.eql 81
