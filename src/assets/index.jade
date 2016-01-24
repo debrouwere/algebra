@@ -1,0 +1,33 @@
+doctype html
+html
+    head
+        link(rel='stylesheet', href='vendor/katex/katex.min.css')
+        link(rel='stylesheet', href='interface.css')
+        script(src='vendor/underscore-min.js')
+        script(src='vendor/jquery-2.1.4.min.js')
+        script(src='algebra.js')
+        script(src='interface.js')
+        script(src='vendor/katex/katex.min.js')
+    body
+        template#expression
+            tr
+                td.expression
+                td.evaluation
+            tr
+                td(colspan=2).explanation
+                    ul
+                        li.rule
+                        li.example
+                        li.description
+
+        table#answers
+            tr
+                td.expression a^2 + 2 * a * b + b^2
+                td.evaluation
+
+        input(type='text', value='a^2 + 2 * a * b + b^2')
+        
+        ul#actions
+            li: a.button(href='#') ⏎
+            li: a.button(href='#') ?
+            li: a.button(href='#') review

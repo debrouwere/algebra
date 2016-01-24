@@ -11,3 +11,10 @@ exports.modifies = (condition, f) ->
             f expr, options...
         else
             expr
+
+exports.apply = (f) ->
+    (args) ->
+        f.apply this, args
+
+exports.sum = (l) ->
+    _.reduce l, (a, b) -> a + b
