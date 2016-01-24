@@ -17,43 +17,41 @@ it 'can tokenize a mathematical expression', ->
         (parser.tokenize expr).should.eql tokens
 
 it 'can detect an incomplete expression'
-    # TODO
-    # shunt should throw errors for mismatched parentheses etc.
+# TODO
+# shunt should throw errors for mismatched parentheses etc.
 
 it 'can determine precedence'
-    # hasPrecedence
+###
+hasPrecedence
 
-    ###
-    # proper precedence parsing for equal precedence operators
-    # (first divide, then multiply)
+# proper precedence parsing for equal precedence operators
+# (first divide, then multiply)
 
-    console.log parse '(a + 22 + b + c) / 22 * b'
-    console.log parse 'a^2 + 2 * a * b + b^2'
-    console.log complexity parse 'a^2 + 2 * a * b + b^2'
-    ###
+console.log parse '(a + 22 + b + c) / 22 * b'
+console.log parse 'a^2 + 2 * a * b + b^2'
+console.log complexity parse 'a^2 + 2 * a * b + b^2'
 
-    ###
-    # parse negative numbers
-    console.log tokenize '-b - -7'
-    console.log tokenize '(-x)^2'
-    show parse '-b^2 + (-x)^2'
-    console.log writeLaTeX parse '-1 * b'
-    ###
+# parse negative numbers
+console.log tokenize '-b - -7'
+console.log tokenize '(-x)^2'
+show parse '-b^2 + (-x)^2'
+console.log writeLaTeX parse '-1 * b'
+###
 
 it 'can reorder tokens to RPN notation'
-    # shunt
-    # (test for correct precedence)
+# shunt
+# (test for correct precedence)
 
 it 'can parse functions'
-    # TODO
+# TODO
 
 it 'can parse unary operators'
-    # TODO
-    # +5 and -7... but more importantly things
-    # like the factorial operator
+# TODO
+# +5 and -7... but more importantly things
+# like the factorial operator
 
 it 'can convert ordered tokens into an expression tree'
-    # nest
+# nest
 
 it 'can parse a mathematical expression into an expression tree', ->
     (parser.parse 'a^2 + 2*a*b + b^2').should.eql [
@@ -66,7 +64,7 @@ it 'can parse a mathematical expression into an expression tree', ->
     ]
 
 it 'can reorder commutative expressions into a canonical form'
-    # canonical
+# canonical
 
 it 'can count the amount of terms in an expression', ->
     expr = [
@@ -77,7 +75,7 @@ it 'can count the amount of terms in an expression', ->
             ],
         ['^', 'b', 2]
     ]
-    (parser.complexity expr).should.eql 6
+    (parser.tuples expr).should.eql 6
 
 it 'can convert an expression tree into LaTeX', ->
     expr =
@@ -99,7 +97,7 @@ it 'can convert an expression tree into LaTeX', ->
         """
 
 it 'can match an expression to a pattern'
-    # match
+# match
 
 it 'can match two expressions by evaluating them at various points', ->
     factored = parser.parse '2*5 + (a+b)^2 - 10'
@@ -110,11 +108,11 @@ it 'can match two expressions by evaluating them at various points', ->
     (parser.test factored, mistaken).should.be.false()
 
 it 'can simplify expressions'
-    # simplify
+# simplify
 
 it 'can diff expressions'
-    # diff
-    # console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
+# diff
+# console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
 
 it 'can calculate the result of a concrete expression', ->
     (parser.calculate ['*', ['+', 4, 5], 9]).should.eql 81

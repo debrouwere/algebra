@@ -17,4 +17,4 @@ exports.apply = (f) ->
         f.apply this, args
 
 exports.sum = (l) ->
-    _.reduce l, (a, b) -> a + b
+    l.reduce (a, b) -> a + b

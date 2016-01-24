@@ -141,6 +141,35 @@ parse = (s) ->
 
 
 #
+# destructuring expressions
+#
+
+unwrap = (obj) ->
+    if obj.length?
+        obj[0]
+    else
+        obj
+
+
+destructured = (fn) ->
+    (expr, options...) ->
+        [op, l, r] = expr
+        fn expr, op, l, r, options...
+
+
+leftmost = modifies isExpression, destructured (expr, op, l, r) ->
+    if isSimpleExpression expr
+        l
+    else
+        leftmost l
+
+rightmost = modifies isExpression, destructured (expr, op, l, r) ->
+    if isSimpleExpression expr
+        r
+    else
+        rightmost r
+
+#
 # evaluation functions
 #
 
@@ -220,21 +249,9 @@ variables = (expr) ->
     else
         []
 
-leftmost = modifies isExpression, destructured (expr, op, l, r) ->
-    if isSimpleExpression expr
-        l
-    else
-        leftmost l
-
-rightmost = modifies isExpression, destructured (expr, op, l, r) ->
-    if isSimpleExpression expr
-        r
-    else
-        rightmost r
-
 
 #
-# manipulation of expressions
+# manipulating simple expressions
 #
 
 flip = (l, i, j) ->
@@ -249,18 +266,9 @@ commute = modifies isExpression, (expr) ->
         expr
 
 
-unwrap = (obj) ->
-    if obj.length?
-        obj[0]
-    else
-        obj
-
-
-destructured = (fn) ->
-    (expr, options...) ->
-        [op, l, r] = expr
-        fn expr, op, l, r, options...
-
+#
+# manipulating expression trees
+#
 
 canonical = modifies isExpression, destructured (expr, op, l, r) ->
     if (isCommutative expr) and (compare l, r) < 0
@@ -376,10 +384,26 @@ diff = (left, right, context) ->
 
 
 module.exports = {
+    # constants
     OPERATORS,
     PRECEDENCE,
     SIGILS,
     VARIABLES,
+    # precedence
+    hasPrecedence,    
+    # parsing
+    tokenize,
+    shunt,
+    parse,
+    nest,
+    # destructuring and extraction
+    leftmost,
+    rightmost,
+    destructured,
+    commute,
+    canonical,
+    substitute,    
+    # test functions
     isOperator,
     isString,
     isVariable,
@@ -389,21 +413,15 @@ module.exports = {
     isSimpleExpression,
     isSimple,
     isCommutative,
-    hasPrecedence,
-    tokenize,
-    shunt,
-    parse,
-    nest,
-    commute,
-    leftmost,
-    rightmost,
-    destructured,
-    canonical,
-    complexity,
-    match,
+    # statistics
+    depth,
+    tuples,
+    order,
+    # comparisons
     test,
-    simplify,
+    match,
     diff,
+    # (partial) solving
+    simplify,
     calculate,
-    substitute,
 }
