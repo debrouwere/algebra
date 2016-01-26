@@ -6,6 +6,7 @@ all:
 	browserify src/interface.coffee \
 		--transform coffeeify \
 		--extension=".coffee" \
+		--debug \
 		--outfile build/algebra.js
 	jade --out build src
 	stylus --out build src

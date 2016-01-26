@@ -150,6 +150,14 @@ patterns = (mapping) ->
 # destructuring expressions
 #
 
+
+isScalar = (expr) ->
+    expr not instanceof Array
+
+isExpression = (expr) ->
+    not isScalar expr
+
+
 unwrap = (obj) ->
     if obj.length?
         obj[0]
@@ -189,14 +197,8 @@ isString = (expr) ->
 
 isVariable = isString
 
-isScalar = (expr) ->
-    expr not instanceof Array
-
 isNumber = (expr) ->
     expr instanceof Number or (typeof expr) is 'number'
-
-isExpression = (expr) ->
-    not isScalar expr
 
 isSimpleExpression = (expr) ->
     (isExpression expr) and _.every expr, isScalar
