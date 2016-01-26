@@ -1,3 +1,13 @@
+# NOTE: in the longer term, I'll be turning the interface into a separate 
+# application, with the `algebra` application becoming a library that
+# focuses entirely on parsing, analyzing and writing expressions.
+
+$ = require 'jquery'
+_ = require 'underscore'
+katex = require 'katex'
+algebra = require './index'
+
+
 component = (name, values) ->
     template = $("template##{name}")
     for key, value of values
@@ -6,9 +16,9 @@ component = (name, values) ->
 
 render = (el, input) ->
     text = $(el).text()
-    input ?= parse text
+    input ?= algebra.parse text
     $(el).data 'math', text
-    latex = toLaTeX input
+    latex = algebra.toLaTeX input
     katex.render latex, el
 
 safeParse = (input) ->
@@ -21,7 +31,7 @@ safeParse = (input) ->
 # TODO: it's probably better to replace the layout with a table: 
 # solution || right/wrong | complexity | why?
 $(document).ready ->
-    question = parse $('#question').text()
+    question = algebra.parse $('#question').text()
     $('.math').each (i, el) -> render el
 
     $('input').keyup ->

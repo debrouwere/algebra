@@ -5,7 +5,7 @@
 # NOTE: one could even imagine using the confusion mechanism with 
 # these mistakes instead of valid confusors/strategies, and then 
 # asking the student whether A is or is not equal to B
-mistakes =
+misconceptions =
     'misapplication of distributivity': patterns {
         '(a + b)^c': 'a^c + b^c'
     }
@@ -22,7 +22,7 @@ mistakes =
 # match for x and y, because those are the variables
 # that were used in the previous expression and this
 # expression builds on that"
-misconceptions = (prev, curr) ->
+findMisconceptions = (prev, curr) ->
     issues = []
 
     for name, pattern of mistakes
@@ -41,6 +41,6 @@ misconceptions = (prev, curr) ->
 
 
 module.exports = {
-    mistakes,
     misconceptions,
+    findMisconceptions,
 }

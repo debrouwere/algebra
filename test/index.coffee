@@ -119,7 +119,7 @@ it 'can diff expressions'
 # console.log diff (parse '3 + (55 + 7) * 12^5'), parse ('4 + (7 + 55) * 12^(4+2)')
 
 it 'can point out mistakes in intermediate solutions', ->
-    issues = helper.misconceptions \
+    issues = helper.findMisconceptions \
         (parser.parse '(x+y)^3'),
         (parser.parse 'y^3 + x^3')
     issueNames = _.pluck issues, 'name'

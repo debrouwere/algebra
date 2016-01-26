@@ -345,7 +345,7 @@ test = (a, b) ->
         ax = substitute a, map
         bx = substitute b, map
         return no unless (calculate ax) is (calculate bx)
-
+    
     yes
 
 

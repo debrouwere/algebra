@@ -1,7 +1,12 @@
 .PHONY: test
 
 all:
-	coffee --output build --bare --compile src
+	coffee --output lib --compile src
+	coffee --output build --compile src/interface.coffee
+	browserify src/interface.coffee \
+		--transform coffeeify \
+		--extension=".coffee" \
+		--outfile build/algebra.js
 	jade --out build src
 	stylus --out build src
 

@@ -180,6 +180,7 @@ confuse = (expr, n) ->
         nr = n - nx - nl
         (confuse [op, (confuse l, nl), (confuse r, nr)], nx)
 
+
 module.exports = {
     CONSTANT,
     FIRST_ORDER,
