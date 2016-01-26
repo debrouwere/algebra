@@ -25,7 +25,7 @@ misconceptions =
 findMisconceptions = (prev, curr) ->
     issues = []
 
-    for name, pattern of mistakes
+    for name, pattern of misconceptions
         for [left, right] in pattern
             issue =
                 name: name

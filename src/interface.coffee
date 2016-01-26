@@ -31,8 +31,8 @@ safeParse = (input) ->
 # TODO: it's probably better to replace the layout with a table: 
 # solution || right/wrong | complexity | why?
 $(document).ready ->
-    question = algebra.parse $('#question').text()
-    $('.math').each (i, el) -> render el
+    question = algebra.parse $('table .expression').first().text()
+    $('.expression').each (i, el) -> render el
 
     $('input').keyup ->
         answer = safeParse $('input').val()
