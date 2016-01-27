@@ -7,6 +7,8 @@ module.exports =
 
 # shortcuts
 module.exports.parse = module.exports.parser.parse
+module.exports.test = module.exports.parser.test
+module.exports.match = module.exports.parser.match
 module.exports.toString = module.exports.writer.toString
 module.exports.toLaTeX = module.exports.writer.toLaTeX
 module.exports.conjure = module.exports.generator.conjure

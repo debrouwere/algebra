@@ -1,15 +1,18 @@
 .PHONY: test
 
-all:
+all: html
+
+library:
 	coffee --output lib --compile src
-	coffee --output build --compile src/interface.coffee
-	browserify src/interface.coffee \
+	browserify src/index.coffee \
 		--transform coffeeify \
 		--extension=".coffee" \
+		--standalone algebra \
 		--debug \
 		--outfile build/algebra.js
-	jade --out build src
-	stylus --out build src
+
+html:
+	jade --hierarchy --pretty --out build src/assets
 
 test:
 	mocha test \
@@ -17,4 +20,4 @@ test:
 		--compilers coffee:coffee-script/register
 
 server:
-	serve ./build --reload --inject --target --watch ./src
+	serve ./build --reload --inject --target html --watch ./src/assets

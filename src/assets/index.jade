@@ -1,33 +1,81 @@
-// NOTE: in the longer term, I'll be turning the interface into a separate 
-// application, with the `algebra` application becoming a library that
-// focuses entirely on parsing, analyzing and writing expressions.
-
 doctype html
 html
-    head
-        link(rel='stylesheet', href='vendor/katex/katex.min.css')
-        link(rel='stylesheet', href='interface.css')
-        script(src='algebra.js')
-    body
-        template#expression
-            tr
-                td.expression
-                td.evaluation
-            tr
-                td(colspan=2).explanation
-                    ul
-                        li.rule
-                        li.example
-                        li.description
+  head
+    style
+      :stylus
+        body
+          font-size: 1.2em
 
-        table#answers
-            tr
-                td.expression a^2 + 2 * a * b + b^2
-                td.evaluation
+        form.form-inline input.form-control
+          width: 50%
+          margin-right: 1em
 
-        input(type='text', value='a^2 + 2 * a * b + b^2')
-        
-        ul#actions
-            li: a.button(href='#') ⏎
-            li: a.button(href='#') ?
-            li: a.button(href='#') review
+    link(rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.6/css/bootstrap.min.css')
+    link(rel='stylesheet' href='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css')
+    //script(src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.js')
+    script(src='//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js')
+    script(src='//cdnjs.cloudflare.com/ajax/libs/riot/2.3.13/riot+compiler.min.js')
+    script(src='//cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.js')
+    script(src='algebra.js')
+    script(type='riot/tag')
+      exercise
+        table.table
+          tr(each='{ expr in expressions }')
+            td(class='{ danger: expr.isFalse }') { expr.latex }
+
+        form.form-inline(onsubmit='{ add }')
+          input.form-control(type='text' value='{ initialExpression.text }')
+          div.btn-group
+            button.btn.btn-default(href='#') review          
+            button.btn.btn-default(href='#') hint
+            button.btn.btn-primary(href='#' onclick='{ add }') ⏎
+
+        style
+          :stylus
+            table
+              font-size: 1.25em
+
+        | 
+        | 
+
+        :coffee-script
+          isValid = (text) ->
+            try
+              algebra.parse text
+              yes
+            catch
+              no
+
+          parse = (text, truth) ->
+            return null unless isValid text
+
+            expression = algebra.parse text
+            latex = algebra.toLaTeX expression
+            if truth
+              isFalse = not algebra.test expression, truth
+            else
+              isFalse = no
+            {expression, text, latex, isFalse}
+
+
+          @initialExpression = parse opts.expression
+          @expressions = [@initialExpression]
+
+          @add = (e) ->
+            input = e.target[0].value
+            if expr = parse input, @initialExpression.expression
+              @expressions.push expr
+
+          @on 'updated', ->
+            el = document.querySelector 'tr:last-child td'
+            katex.render el.textContent, el
+
+  body
+    div.container
+      h1 Let's do some algebra!
+      exercise
+
+    script(type=undefined)
+      :coffee-script
+        riot.mount 'exercise',
+          expression: 'a^2 + 2 * a * b + b^2'
