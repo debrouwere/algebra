@@ -4,6 +4,15 @@ _ = require 'underscore'
 {VARIABLES, SIGILS} = require './parser'
 
 
+
+
+
+
+#
+# conjure up long polynomial that still have easy simplifications
+# by starting from the solution and then "confusing" it
+#
+
 CONSTANT =
     unknowns: 1
     order: [0, 0]
@@ -102,38 +111,6 @@ choose = (l) ->
     l[ix]
 
 
-# NOTE: might get rid of this, but leaving it in while I decide on how
-# the confusor should really work going forward
-class Context
-    # TODO: figure out symbols that are actually still available
-    constructor: ->
-        @freeSymbols = ['x', 'y', 'z']
-
-    # TODO
-    symbol: ->
-        choose ['x', 'y', 'z']
-    
-    scalar: (max=10) ->
-        (choose [@symbol, @integer])()
-    
-    integer: (max=10) ->
-        _.random -max, max
-
-
-# TODO: hmm, I think this has all the right elements --
-# it has the recursion, it has the "make stuff more difficult"
-# strategies as well as the "split into factors" strategies, 
-# but I need to figure out how to make all of this work together
-# nicely
-factor = (expr) ->
-    for [pattern, replacement] in strategies
-        state = {}
-        if match expr, pattern, state
-            expr = substitute replacement, state
-
-    expr
-
-
 ###
 
 The confusor mechanism is getting better, but there is still much work to do
@@ -163,6 +140,15 @@ application some love, like the mistake differ/detector/explainer part.
 ###
 
 confuse = (expr, n) ->
+    ###
+    e.g. 
+
+        expr = conjure CONSTANT
+        for n in [0, 3, 6, 9, 12, 15]
+            toString confuse expr, n
+    
+    ###
+
     if n is 0
         expr
     else if n is 1
