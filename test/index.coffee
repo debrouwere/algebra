@@ -2,6 +2,7 @@ _ = require 'underscore'
 should = require 'should'
 
 parser = require '../src/parser'
+solver = require '../src/solver'
 writer = require '../src/writer'
 generator = require '../src/generator'
 helper = require '../src/helper'
@@ -127,7 +128,7 @@ it 'can point out mistakes in intermediate solutions', ->
 
 
 it 'can calculate the result of a concrete expression', ->
-    (parser.calculate ['*', ['+', 4, 5], 9]).should.eql 81
+    (solver.calculate ['*', ['+', 4, 5], 9]).should.eql 81
 
 it 'can fill in variables in an abstract expression', ->
     expr = parser.parse 'a + (22 * b)^c + 9^(2^c)'
@@ -135,4 +136,4 @@ it 'can fill in variables in an abstract expression', ->
         a: 1
         b: 2
         c: 3
-    (parser.calculate filled).should.eql 43131906
+    (solver.calculate filled).should.eql 43131906

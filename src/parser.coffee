@@ -292,6 +292,22 @@ substitute = modifies isExpression, (expr, state, recursive=yes) ->
     state[el] or el for el in expr
 
 
+# calculate a concrete expression (without any symbolic manipulation)
+###
+NOTE: while `calculate` can do partial calculations that keep
+symbols intact, it's not quite smart enough to use the 
+associative property to rejig the expression tree, so it 
+currently cannot simplify e.g. `3 + a + 5` to `8 + a`
+###
+calculate = modifies isExpression, destructured (expr, op, l, r) ->
+    l = calculate l
+    r = calculate r
+    if (isNumber l) and (isNumber r)
+        OPERATORS[op] l, r
+    else
+        [op, l, r]
+
+
 #
 # testing and pattern matching
 #
@@ -386,6 +402,8 @@ module.exports = {
     depth,
     tuples,
     order,
+    # calculation and simplification
+    calculate,
     # comparisons
     test,
     match,
