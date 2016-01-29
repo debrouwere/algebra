@@ -4,7 +4,7 @@ Many high school pre-algebra and algebra exercises are mathematically trivial bu
 
 Most exercises below don't need unknowns to be challenging to students. The outcome can be a constant. Correctly applying the order of operations and keeping intermediate steps in your head is practice enough.
 
-I'm particularly interested in the computational side of things: if you know how to manipulate expressions really well, everything else should be easier. So while people usually think of solving equations and the like when they think of algebra, from an educational point of view getting the arithmetical aspect of it down pat feels meer essential to me -- though admittedly that's just a theory.
+I'm particularly interested in the computational side of things: if you know how to manipulate expressions really well, everything else should be easier. So while people usually think of solving equations and the like when they think of algebra, from an educational point of view getting the arithmetical aspect of it down pat feels more essential to me -- though admittedly that's just a theory.
 
 
 ## Basic techniques
